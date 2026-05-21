@@ -94,6 +94,9 @@ export default function LoginPage() {
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <img src="/logo.png" alt="Company logo" style={{ maxHeight: 56, maxWidth: '100%', objectFit: 'contain' }} />
+        </div>
         <h1 style={titleStyle}>Training Platform</h1>
         {error && <div style={{ marginBottom: '1rem' }}><ErrorMessage message={error} /></div>}
         <form onSubmit={handleSubmit}>
