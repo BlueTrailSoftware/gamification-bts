@@ -21,6 +21,7 @@ export interface UserProps {
   role: UserRole;
   isActive: boolean;
   authProvider: AuthProvider;
+  currentProject: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +39,7 @@ export class User {
     role: UserRole;
     isActive?: boolean;
     authProvider?: AuthProvider;
+    currentProject?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
   }): User {
@@ -58,6 +60,7 @@ export class User {
       role: params.role,
       isActive: params.isActive ?? true,
       authProvider: params.authProvider ?? AuthProvider.LOCAL,
+      currentProject: params.currentProject ?? null,
       createdAt: params.createdAt ?? new Date(),
       updatedAt: params.updatedAt ?? new Date(),
     });
@@ -108,6 +111,10 @@ export class User {
     return this.props.authProvider;
   }
 
+  get currentProject(): string | null {
+    return this.props.currentProject;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -142,6 +149,7 @@ export class User {
       role: this.props.role,
       isActive: this.props.isActive,
       authProvider: this.props.authProvider,
+      currentProject: this.props.currentProject,
       createdAt: this.props.createdAt.toISOString(),
       updatedAt: this.props.updatedAt.toISOString(),
     };

@@ -13,6 +13,8 @@ export interface GoogleOAuthDTO {
   email: string;
   displayName: string;
   googleId: string;
+  firstName?: string;
+  lastName?: string;
   ipAddress?: string;
 }
 
@@ -103,6 +105,8 @@ export class LoginWithGoogleOAuthUseCase {
     const newUser = User.create({
       id: uuidv4(),
       username,
+      firstName: dto.firstName || '',
+      lastName: dto.lastName || '',
       email: emailObj,
       passwordHash: null, // OAuth users don't have passwords
       role: UserRole.EMPLOYEE, // Default role for new OAuth users

@@ -12,6 +12,7 @@ export interface CreateUserDTO {
   email: string;
   password: string;
   role: UserRole;
+  currentProject?: string | null;
 }
 
 export class CreateUserUseCase {
@@ -77,6 +78,7 @@ export class CreateUserUseCase {
       role: dto.role,
       isActive: true,
       authProvider: AuthProvider.LOCAL,
+      currentProject: dto.currentProject ?? null,
     });
 
     // Persist user

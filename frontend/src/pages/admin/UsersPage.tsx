@@ -101,6 +101,7 @@ interface FormData {
   email: string;
   password: string;
   role: 'ADMIN' | 'EMPLOYEE';
+  currentProject: string;
 }
 const emptyForm: FormData = {
   username: '',
@@ -109,6 +110,7 @@ const emptyForm: FormData = {
   email: '',
   password: '',
   role: 'EMPLOYEE',
+  currentProject: '',
 };
 
 export default function UsersPage() {
@@ -157,6 +159,7 @@ export default function UsersPage() {
       email: u.email,
       password: '',
       role: u.role,
+      currentProject: u.currentProject || '',
     });
     setFormError('');
     setShowModal(true);
@@ -211,12 +214,16 @@ export default function UsersPage() {
           role: form.role,
           firstName: form.firstName,
           lastName: form.lastName,
+          currentProject: form.currentProject.trim() || null,
         };
         if (form.password.trim()) payload.password = form.password;
         await api.put(`/users/${editingUser.id}`, payload);
         setSuccess('User updated successfully');
       } else {
-        await api.post('/users', form);
+        await api.post('/users', {
+          ...form,
+          currentProject: form.currentProject.trim() || null,
+        });
         setSuccess('User created successfully');
       }
       closeModal();
@@ -272,6 +279,7 @@ export default function UsersPage() {
             <th style={th}>Username</th>
             <th style={th}>Name</th>
             <th style={th}>Email</th>
+            <th style={th}>Project</th>
             <th style={th}>Role</th>
             <th style={th}>Status</th>
             <th style={th}>Created</th>
@@ -286,6 +294,7 @@ export default function UsersPage() {
                 {u.displayName || [u.firstName, u.lastName].filter(Boolean).join(' ') || u.username}
               </td>
               <td style={td}>{u.email}</td>
+              <td style={{ ...td, color: '#475569', fontSize: '0.8rem' }}>{u.currentProject || '—'}</td>
               <td style={td}>
                 <span
                   style={{
@@ -391,6 +400,16 @@ export default function UsersPage() {
                   <option value="EMPLOYEE">Employee</option>
                   <option value="ADMIN">Admin</option>
                 </select>
+              </div>
+              <div style={fieldGroup}>
+                <label style={labelStyle}>Current Project (optional)</label>
+                <input
+                  style={inputStyle}
+                  maxLength={200}
+                  value={form.currentProject}
+                  onChange={(e) => setForm({ ...form, currentProject: e.target.value })}
+                  placeholder="e.g. Project Phoenix"
+                />
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                 <button type="button" style={btnSecondary} onClick={closeModal}>

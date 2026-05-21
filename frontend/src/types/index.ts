@@ -8,6 +8,7 @@ export interface User {
   role: 'ADMIN' | 'EMPLOYEE';
   isActive: boolean;
   authProvider: 'LOCAL' | 'GOOGLE_OAUTH';
+  currentProject: string | null;
   createdAt: string;
   updatedAt: string;
 }

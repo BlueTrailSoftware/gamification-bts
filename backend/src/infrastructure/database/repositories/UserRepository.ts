@@ -11,11 +11,11 @@ export class UserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
     const pool = getDatabasePool();
     const query = `
-      INSERT INTO users (id, username, first_name, last_name, email, password_hash, role, is_active, auth_provider, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      INSERT INTO users (id, username, first_name, last_name, email, password_hash, role, is_active, auth_provider, current_project, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
-    
+
     const values = [
       user.id,
       user.username,
@@ -26,6 +26,7 @@ export class UserRepository implements IUserRepository {
       user.role,
       user.isActive,
       user.authProvider,
+      user.currentProject,
       user.createdAt,
       user.updatedAt
     ];
@@ -111,6 +112,11 @@ export class UserRepository implements IUserRepository {
       values.push(updates.isActive);
     }
 
+    if ((updates as any).currentProject !== undefined) {
+      setClauses.push(`current_project = $${paramIndex++}`);
+      values.push((updates as any).currentProject);
+    }
+
     setClauses.push(`updated_at = $${paramIndex++}`);
     values.push(new Date());
 
@@ -162,6 +168,7 @@ export class UserRepository implements IUserRepository {
       role: row.role as UserRole,
       isActive: row.is_active,
       authProvider: row.auth_provider as AuthProvider,
+      currentProject: row.current_project || null,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     });

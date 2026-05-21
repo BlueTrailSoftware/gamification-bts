@@ -24,6 +24,7 @@ const createUserSchema = z.object({
   email: z.string().email('Invalid email format'),
   password: z.string().min(1, 'Password is required'),
   role: z.enum(['ADMIN', 'EMPLOYEE'], { errorMap: () => ({ message: 'Role must be ADMIN or EMPLOYEE' }) }),
+  currentProject: z.string().max(200).nullable().optional(),
 });
 
 const updateUserSchema = z.object({
@@ -33,6 +34,7 @@ const updateUserSchema = z.object({
   email: z.string().email('Invalid email format').optional(),
   password: z.string().min(1).optional(),
   role: z.enum(['ADMIN', 'EMPLOYEE']).optional(),
+  currentProject: z.string().max(200).nullable().optional(),
 }).refine(data => Object.keys(data).length > 0, { message: 'At least one field must be provided' });
 
 // All user routes require authentication + admin role
@@ -48,6 +50,7 @@ router.post('/', validateRequest(createUserSchema), async (req: Request, res: Re
       email: req.body.email,
       password: req.body.password,
       role: req.body.role as UserRole,
+      currentProject: req.body.currentProject ?? null,
     });
     res.status(201).json(user.toJSON());
   } catch (error) {

@@ -17,6 +17,8 @@ export interface OAuthUserInfo {
   email: string;
   displayName: string;
   googleId: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 /**
@@ -102,6 +104,8 @@ export class GoogleOAuthService {
         email,
         displayName: profile.displayName || email.split('@')[0],
         googleId: profile.id,
+        firstName: profile.name?.givenName,
+        lastName: profile.name?.familyName,
       });
     }
 
@@ -136,6 +140,8 @@ export class GoogleOAuthService {
     const newUser = User.create({
       id: uuidv4(),
       username,
+      firstName: userInfo.firstName || '',
+      lastName: userInfo.lastName || '',
       email: emailObj,
       passwordHash: null, // OAuth users don't have passwords
       role: UserRole.EMPLOYEE, // Default role for new OAuth users

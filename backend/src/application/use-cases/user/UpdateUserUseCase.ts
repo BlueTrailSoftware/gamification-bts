@@ -14,6 +14,7 @@ export interface UpdateUserDTO {
   email?: string;
   password?: string;
   role?: UserRole;
+  currentProject?: string | null;
 }
 
 export interface UpdateUserContext {
@@ -108,6 +109,13 @@ export class UpdateUserUseCase {
       const passwordHash = await this.authenticationService.hashPassword(dto.password);
       changes.password = { from: '[REDACTED]', to: '[REDACTED]' };
       updates.passwordHash = passwordHash;
+    }
+
+    if (dto.currentProject !== undefined) {
+      if (dto.currentProject !== existingUser.currentProject) {
+        changes.currentProject = { from: existingUser.currentProject, to: dto.currentProject };
+        updates.currentProject = dto.currentProject;
+      }
     }
 
     // Only update if there are changes
