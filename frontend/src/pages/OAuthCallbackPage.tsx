@@ -24,7 +24,7 @@ export default function OAuthCallbackPage() {
       try {
         const user = JSON.parse(decodeURIComponent(userParam));
         loginWithToken(token, user);
-        navigate('/dashboard', { replace: true });
+        window.location.replace('/dashboard');
       } catch {
         setError('Failed to process authentication response.');
       }
