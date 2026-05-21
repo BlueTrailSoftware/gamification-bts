@@ -14,7 +14,7 @@ import { createAuthenticateMiddleware } from '../middleware';
 const router = Router();
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  email: z.string().email('Invalid email format'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -26,7 +26,7 @@ const refreshSchema = z.object({
 router.post('/login', validateRequest(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await loginWithCredentialsUseCase.execute({
-      username: req.body.username,
+      email: req.body.email,
       password: req.body.password,
       ipAddress: req.ip,
     });

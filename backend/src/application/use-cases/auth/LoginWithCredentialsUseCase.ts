@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../../domain/entities/User';
+import { Email } from '../../../domain/value-objects/Email';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { IAuditLogRepository } from '../../../domain/repositories/IAuditLogRepository';
 import { AuthenticationService } from '../../../domain/services/AuthenticationService';
@@ -9,7 +10,7 @@ import { AuthenticationError, ValidationError } from '../../../shared/errors';
 import { Session } from '../../../domain/repositories/ISessionRepository';
 
 export interface LoginWithCredentialsDTO {
-  username: string;
+  email: string;
   password: string;
   ipAddress?: string;
 }
@@ -34,15 +35,15 @@ export class LoginWithCredentialsUseCase {
 
   async execute(dto: LoginWithCredentialsDTO): Promise<LoginResult> {
     // Validate required fields
-    if (!dto.username || dto.username.trim().length === 0) {
-      throw new ValidationError('Username is required');
+    if (!dto.email || dto.email.trim().length === 0) {
+      throw new ValidationError('Email is required');
     }
     if (!dto.password || dto.password.length === 0) {
       throw new ValidationError('Password is required');
     }
 
-    // Find user by username
-    const user = await this.userRepository.findByUsername(dto.username.trim());
+    // Find user by email
+    const user = await this.userRepository.findByEmail(new Email(dto.email.trim()));
     if (!user) {
       throw new AuthenticationError('Invalid credentials');
     }
@@ -77,7 +78,7 @@ export class LoginWithCredentialsUseCase {
       action: AuditAction.LOGIN,
       entityType: 'Session',
       entityId: session.id,
-      changes: { method: 'credentials', username: user.username },
+      changes: { method: 'credentials', email: user.email.getValue() },
       ipAddress: dto.ipAddress ?? null,
     });
     await this.auditLogRepository.create(auditLog);

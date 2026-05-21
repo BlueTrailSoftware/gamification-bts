@@ -62,7 +62,7 @@ const fieldGroup: React.CSSProperties = {
 };
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -72,13 +72,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!username.trim() || !password.trim()) {
-      setError('Username and password are required');
+    if (!email.trim() || !password.trim()) {
+      setError('Email and password are required');
       return;
     }
     setSubmitting(true);
     try {
-      await login(username, password);
+      await login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -98,14 +98,14 @@ export default function LoginPage() {
         {error && <div style={{ marginBottom: '1rem' }}><ErrorMessage message={error} /></div>}
         <form onSubmit={handleSubmit}>
           <div style={fieldGroup}>
-            <label style={labelStyle} htmlFor="username">Username</label>
+            <label style={labelStyle} htmlFor="email">Email</label>
             <input
-              id="username"
+              id="email"
               style={inputStyle}
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
             />
           </div>
           <div style={fieldGroup}>
