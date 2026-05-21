@@ -48,29 +48,36 @@ router.get('/oauth/google', (req: Request, res: Response, next: NextFunction) =>
 router.get('/oauth/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   async (req: Request, res: Response, next: NextFunction) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     try {
       const oauthUser = req.user as any;
       if (!oauthUser) {
-        res.status(401).json({ error: { code: 'AUTHENTICATION_ERROR', message: 'OAuth authentication failed' } });
+        res.redirect(`${frontendUrl}/auth/callback?error=${encodeURIComponent('OAuth authentication failed')}`);
         return;
       }
-      // If passport strategy already returned token+user
+
+      let token: string;
+      let userJson: object;
+
       if (oauthUser.token && oauthUser.user) {
-        res.json({ token: oauthUser.token, user: oauthUser.user.toJSON ? oauthUser.user.toJSON() : oauthUser.user });
-        return;
+        token = oauthUser.token;
+        userJson = oauthUser.user.toJSON ? oauthUser.user.toJSON() : oauthUser.user;
+      } else {
+        const result = await loginWithGoogleOAuthUseCase.execute({
+          email: oauthUser.email || oauthUser.emails?.[0]?.value,
+          displayName: oauthUser.displayName || '',
+          googleId: oauthUser.id || oauthUser.googleId || '',
+          ipAddress: req.ip,
+        });
+        token = result.token;
+        userJson = result.user.toJSON();
       }
-      // Otherwise use the use case
-      const result = await loginWithGoogleOAuthUseCase.execute({
-        email: oauthUser.email || oauthUser.emails?.[0]?.value,
-        displayName: oauthUser.displayName || '',
-        googleId: oauthUser.id || oauthUser.googleId || '',
-        ipAddress: req.ip,
+
+      const params = new URLSearchParams({
+        token,
+        user: encodeURIComponent(JSON.stringify(userJson)),
       });
-      res.json({
-        token: result.token,
-        user: result.user.toJSON(),
-        isNewUser: result.isNewUser,
-      });
+      res.redirect(`${frontendUrl}/auth/callback?${params}`);
     } catch (error) {
       next(error);
     }
