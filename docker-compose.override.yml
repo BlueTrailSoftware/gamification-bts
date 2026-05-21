@@ -11,6 +11,8 @@ services:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - training-platform-network
+    ports:
+      - '5432:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U training_user -d training_platform']
       interval: 10s
