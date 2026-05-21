@@ -18,6 +18,7 @@ import {
   deleteTrainingFileUseCase,
   downloadTrainingFileUseCase,
   tokenManagementService,
+  trainingRecordRepository,
 } from '../container';
 import { createAuthenticateMiddleware } from '../middleware';
 import { UserRole } from '../../domain/entities/User';
@@ -45,6 +46,8 @@ const createRecordSchema = z.object({
   hours: z.number().min(0.5).max(1000),
   completedDate: z.string().optional(),
   completionDate: z.string().optional(),
+  studyPlatform: z.string().max(200).optional(),
+  trainingLink: z.string().url('Invalid URL').optional(),
 });
 
 const updateRecordSchema = z.object({
@@ -53,6 +56,8 @@ const updateRecordSchema = z.object({
   description: z.string().min(1).max(2000).optional(),
   hours: z.number().min(0.5).max(1000).optional(),
   completionDate: z.string().nullable().optional(),
+  studyPlatform: z.string().max(200).nullable().optional(),
+  trainingLink: z.string().url('Invalid URL').nullable().optional(),
 }).refine(data => Object.keys(data).length > 0, { message: 'At least one field must be provided' });
 
 const searchQuerySchema = z.object({
@@ -104,6 +109,31 @@ router.get('/', validateQuery(searchQuerySchema),
         { requestingUserId: authUser.userId, requestingUserRole: authUser.role }
       );
       res.json(records.map(r => r.toJSON()));
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /training-records/browse (any authenticated user — read-only view of all records)
+const browseQuerySchema = z.object({
+  technologyId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+router.get('/browse', validateQuery(browseQuerySchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const query = req.query as any;
+      const records = await trainingRecordRepository.browseAll({
+        technologyId: query.technologyId,
+        userId: query.userId,
+        startDate: query.startDate ? new Date(query.startDate) : undefined,
+        endDate: query.endDate ? new Date(query.endDate) : undefined,
+      });
+      res.json(records);
     } catch (error) {
       next(error);
     }

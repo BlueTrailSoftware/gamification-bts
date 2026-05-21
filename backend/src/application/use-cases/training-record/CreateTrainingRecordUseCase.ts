@@ -14,6 +14,8 @@ export interface CreateTrainingRecordDTO {
   hours: number;
   completedDate?: string;
   completionDate?: string;
+  studyPlatform?: string;
+  trainingLink?: string;
 }
 
 export interface CreateTrainingRecordContext {
@@ -45,6 +47,23 @@ export class CreateTrainingRecordUseCase {
       throw new ValidationError('Hours is required');
     }
 
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    if (dto.completedDate) {
+      const date = new Date(dto.completedDate);
+      if (date < oneYearAgo) {
+        throw new ValidationError('Completion date cannot be more than 1 year in the past');
+      }
+    }
+
+    if (dto.completionDate) {
+      const date = new Date(dto.completionDate);
+      if (date < oneYearAgo) {
+        throw new ValidationError('Completion date cannot be more than 1 year in the past');
+      }
+    }
+
     // Create TrainingHours value object (validates range and decimal places)
     const trainingHours = new TrainingHours(dto.hours);
 
@@ -58,6 +77,8 @@ export class CreateTrainingRecordUseCase {
       hours: trainingHours,
       completedDate: dto.completedDate ? new Date(dto.completedDate) : null,
       completionDate: dto.completionDate ?? null,
+      studyPlatform: dto.studyPlatform ?? null,
+      trainingLink: dto.trainingLink ?? null,
     });
 
     // Persist via repository

@@ -5,6 +5,8 @@ import { TrainingHours } from '../../../domain/value-objects/TrainingHours';
 import {
   ITrainingRecordRepository,
   SearchCriteria,
+  BrowseCriteria,
+  BrowseRecord,
 } from '../../../domain/repositories/ITrainingRecordRepository';
 
 /**
@@ -15,8 +17,8 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
   async create(record: TrainingRecord): Promise<TrainingRecord> {
     const pool = getDatabasePool();
     const query = `
-      INSERT INTO training_records (id, user_id, technology_id, title, description, hours, completed_date, completion_date, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO training_records (id, user_id, technology_id, title, description, hours, completed_date, completion_date, study_platform, training_link, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
 
@@ -29,6 +31,8 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
       record.hours.getValue(),
       record.completedDate,
       record.completionDate,
+      record.studyPlatform,
+      record.trainingLink,
       record.createdAt,
       record.updatedAt,
     ];
@@ -88,6 +92,16 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
     if ((updates as any).completionDate !== undefined) {
       setClauses.push(`completion_date = $${paramIndex++}`);
       values.push((updates as any).completionDate);
+    }
+
+    if ((updates as any).studyPlatform !== undefined) {
+      setClauses.push(`study_platform = $${paramIndex++}`);
+      values.push((updates as any).studyPlatform);
+    }
+
+    if ((updates as any).trainingLink !== undefined) {
+      setClauses.push(`training_link = $${paramIndex++}`);
+      values.push((updates as any).trainingLink);
     }
 
     setClauses.push(`updated_at = $${paramIndex++}`);
@@ -154,6 +168,8 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
                   ? row.completion_date.toISOString().split('T')[0]
                   : String(row.completion_date)
                 : null,
+            studyPlatform: row.study_platform ?? null,
+            trainingLink: row.training_link ?? null,
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at),
             files: [],
@@ -260,6 +276,8 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
                   ? row.completion_date.toISOString().split('T')[0]
                   : String(row.completion_date)
                 : null,
+            studyPlatform: row.study_platform ?? null,
+            trainingLink: row.training_link ?? null,
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at),
             files: [],
@@ -308,6 +326,72 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
     return result.rows.map((row) => this.mapRowToTrainingRecord(row));
   }
 
+  async browseAll(criteria: BrowseCriteria): Promise<BrowseRecord[]> {
+    const pool = getDatabasePool();
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (criteria.technologyId) {
+      conditions.push(`tr.technology_id = $${paramIndex++}`);
+      values.push(criteria.technologyId);
+    }
+
+    if (criteria.userId) {
+      conditions.push(`tr.user_id = $${paramIndex++}`);
+      values.push(criteria.userId);
+    }
+
+    if (criteria.startDate) {
+      conditions.push(`tr.created_at >= $${paramIndex++}`);
+      values.push(criteria.startDate);
+    }
+
+    if (criteria.endDate) {
+      conditions.push(`tr.created_at <= $${paramIndex++}`);
+      values.push(criteria.endDate);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const query = `
+      SELECT
+        tr.id, tr.user_id, tr.technology_id,
+        tr.title, tr.description, tr.hours,
+        tr.completion_date, tr.study_platform, tr.training_link,
+        tr.created_at,
+        COALESCE(u.first_name || ' ' || u.last_name, u.username) AS user_display_name,
+        t.name AS technology_name
+      FROM training_records tr
+      JOIN users u ON tr.user_id = u.id
+      JOIN technologies t ON tr.technology_id = t.id
+      ${whereClause}
+      ORDER BY tr.created_at DESC
+    `;
+
+    const result = await pool.query(query, values);
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      userDisplayName: row.user_display_name,
+      technologyId: row.technology_id,
+      technologyName: row.technology_name,
+      title: row.title,
+      description: row.description,
+      hours: parseFloat(row.hours),
+      completionDate:
+        row.completion_date != null
+          ? row.completion_date instanceof Date
+            ? row.completion_date.toISOString().split('T')[0]
+            : String(row.completion_date)
+          : null,
+      studyPlatform: row.study_platform ?? null,
+      trainingLink: row.training_link ?? null,
+      createdAt: new Date(row.created_at).toISOString(),
+    }));
+  }
+
   private mapRowToTrainingRecord(row: any): TrainingRecord {
     return TrainingRecord.create({
       id: row.id,
@@ -323,6 +407,8 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
             ? row.completion_date.toISOString().split('T')[0]
             : String(row.completion_date)
           : null,
+      studyPlatform: row.study_platform ?? null,
+      trainingLink: row.training_link ?? null,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
       files: [],

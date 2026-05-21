@@ -11,6 +11,8 @@ export interface TrainingRecordProps {
   hours: TrainingHours;
   completedDate: Date | null;
   completionDate: string | null;
+  studyPlatform: string | null;
+  trainingLink: string | null;
   createdAt: Date;
   updatedAt: Date;
   files: TrainingFile[];
@@ -56,6 +58,8 @@ export class TrainingRecord {
     hours: TrainingHours;
     completedDate?: Date | null;
     completionDate?: string | null;
+    studyPlatform?: string | null;
+    trainingLink?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
     files?: TrainingFile[];
@@ -105,6 +109,8 @@ export class TrainingRecord {
       hours: params.hours,
       completedDate: params.completedDate ?? null,
       completionDate: params.completionDate ?? null,
+      studyPlatform: params.studyPlatform ?? null,
+      trainingLink: params.trainingLink ?? null,
       createdAt: params.createdAt ?? now,
       updatedAt: params.updatedAt ?? now,
       files,
@@ -143,6 +149,14 @@ export class TrainingRecord {
     return this.props.completionDate;
   }
 
+  get studyPlatform(): string | null {
+    return this.props.studyPlatform;
+  }
+
+  get trainingLink(): string | null {
+    return this.props.trainingLink;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -162,6 +176,8 @@ export class TrainingRecord {
     hours?: TrainingHours;
     completedDate?: Date | null;
     completionDate?: string | null;
+    studyPlatform?: string | null;
+    trainingLink?: string | null;
   }): void {
     if (params.technologyId !== undefined) {
       if (!params.technologyId || params.technologyId.trim().length === 0) {
@@ -205,6 +221,14 @@ export class TrainingRecord {
       this.props.completionDate = params.completionDate;
     }
 
+    if (params.studyPlatform !== undefined) {
+      this.props.studyPlatform = params.studyPlatform;
+    }
+
+    if (params.trainingLink !== undefined) {
+      this.props.trainingLink = params.trainingLink;
+    }
+
     this.props.updatedAt = new Date();
   }
 
@@ -241,6 +265,8 @@ export class TrainingRecord {
       hours: this.props.hours.getValue(),
       completedDate: this.props.completedDate ? this.props.completedDate.toISOString().split('T')[0] : null,
       completionDate: this.props.completionDate ?? null,
+      studyPlatform: this.props.studyPlatform ?? null,
+      trainingLink: this.props.trainingLink ?? null,
       createdAt: this.props.createdAt.toISOString(),
       updatedAt: this.props.updatedAt.toISOString(),
       files: this.props.files.map(f => f.toJSON()),

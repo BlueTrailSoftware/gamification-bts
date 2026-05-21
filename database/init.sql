@@ -44,6 +44,8 @@ CREATE TABLE training_records (
   description TEXT NOT NULL,
   hours DECIMAL(6,2) NOT NULL CHECK (hours >= 0.5 AND hours <= 1000),
   completion_date DATE,
+  study_platform VARCHAR(200),
+  training_link TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

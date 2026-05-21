@@ -13,6 +13,7 @@ import LeaderboardPage from '@pages/admin/LeaderboardPage';
 import TechnologiesPage from '@pages/admin/TechnologiesPage';
 import AnalyticsPage from '@pages/admin/AnalyticsPage';
 import AuditLogsPage from '@pages/admin/AuditLogsPage';
+import CoursesPage from '@pages/CoursesPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -39,6 +40,7 @@ function AppRoutes() {
       {/* Protected routes with layout */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/courses" element={<CoursesPage />} />
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />

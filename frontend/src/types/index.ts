@@ -21,6 +21,8 @@ export interface TrainingRecord {
   hours: number;
   completedDate: string | null;
   completionDate: string | null;
+  studyPlatform: string | null;
+  trainingLink: string | null;
   createdAt: string;
   updatedAt: string;
   files: TrainingFile[];

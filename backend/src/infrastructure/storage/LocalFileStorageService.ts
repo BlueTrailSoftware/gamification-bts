@@ -12,7 +12,7 @@ import { ValidationError, NotFoundError } from '../../shared/errors';
 
 /**
  * Local filesystem implementation of FileStorageService
- * 
+ *
  * Stores files in: /uploads/training-files/{year}/{month}/{uuid}.{extension}
  * Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5, 12.2, 12.4, 20.4
  */
@@ -22,7 +22,23 @@ export class LocalFileStorageService implements FileStorageService {
 
   constructor(baseUploadPath: string = './uploads', urlSigningSecret?: string) {
     this.baseUploadPath = baseUploadPath;
-    this.urlSigningSecret = urlSigningSecret || process.env.URL_SIGNING_SECRET || 'default-secret-change-in-production';
+    this.urlSigningSecret =
+      urlSigningSecret || process.env.URL_SIGNING_SECRET || 'default-secret-change-in-production';
+  }
+
+  /**
+   * Map file extension to MIME type
+   */
+  private getMimeTypeFromExtension(filename: string): string {
+    const ext = filename.toLowerCase().split('.').pop() || '';
+    const mimeTypeMap: Record<string, string> = {
+      pdf: 'application/pdf',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    };
+    return mimeTypeMap[ext] || '';
   }
 
   /**
@@ -34,10 +50,19 @@ export class LocalFileStorageService implements FileStorageService {
     originalFilename: string,
     mimeType: string
   ): Promise<FileMetadata> {
+    // If browser sends generic octet-stream, try to detect real type from extension
+    let effectiveMimeType = mimeType;
+    if (mimeType === 'application/octet-stream' || mimeType === 'application/unknown') {
+      const detectedMimeType = this.getMimeTypeFromExtension(originalFilename);
+      if (detectedMimeType) {
+        effectiveMimeType = detectedMimeType;
+      }
+    }
+
     // Validate file type
-    if (!this.validateFileType(mimeType)) {
+    if (!this.validateFileType(effectiveMimeType)) {
       throw new ValidationError(
-        `File type ${mimeType} is not allowed. Allowed types: ${FILE_VALIDATION.allowedMimeTypes.join(', ')}`
+        `File type ${effectiveMimeType} is not allowed. Allowed types: ${FILE_VALIDATION.allowedMimeTypes.join(', ')}`
       );
     }
 
@@ -57,12 +82,7 @@ export class LocalFileStorageService implements FileStorageService {
     const now = new Date();
     const year = now.getFullYear().toString();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const directoryPath = path.join(
-      this.baseUploadPath,
-      'training-files',
-      year,
-      month
-    );
+    const directoryPath = path.join(this.baseUploadPath, 'training-files', year, month);
 
     // Ensure directory exists
     await fs.mkdir(directoryPath, { recursive: true });
@@ -76,7 +96,7 @@ export class LocalFileStorageService implements FileStorageService {
       originalFilename,
       storedFilename,
       fileSize: file.length,
-      mimeType,
+      mimeType: effectiveMimeType,
       uploadedAt: now,
     };
   }
@@ -87,7 +107,7 @@ export class LocalFileStorageService implements FileStorageService {
    */
   async downloadFile(storedFilename: string): Promise<Buffer> {
     const filePath = await this.findFilePath(storedFilename);
-    
+
     if (!filePath) {
       throw new NotFoundError('File');
     }
@@ -105,7 +125,7 @@ export class LocalFileStorageService implements FileStorageService {
    */
   async deleteFile(storedFilename: string): Promise<boolean> {
     const filePath = await this.findFilePath(storedFilename);
-    
+
     if (!filePath) {
       return false;
     }
@@ -121,7 +141,7 @@ export class LocalFileStorageService implements FileStorageService {
   /**
    * Generate a secure, time-limited download URL
    * Validates: Requirements 12.4
-   * 
+   *
    * URL format: /api/files/{storedFilename}/download?token={signedToken}&expires={timestamp}
    */
   async generateSecureUrl(
@@ -197,7 +217,7 @@ export class LocalFileStorageService implements FileStorageService {
    */
   async fileExists(storedFilename: string): Promise<boolean> {
     const filePath = await this.findFilePath(storedFilename);
-    
+
     if (!filePath) {
       return false;
     }
@@ -226,25 +246,25 @@ export class LocalFileStorageService implements FileStorageService {
 
     // Search through year directories
     const years = await fs.readdir(trainingFilesPath);
-    
+
     for (const year of years) {
       const yearPath = path.join(trainingFilesPath, year);
       const yearStat = await fs.stat(yearPath);
-      
+
       if (!yearStat.isDirectory()) continue;
 
       // Search through month directories
       const months = await fs.readdir(yearPath);
-      
+
       for (const month of months) {
         const monthPath = path.join(yearPath, month);
         const monthStat = await fs.stat(monthPath);
-        
+
         if (!monthStat.isDirectory()) continue;
 
         // Check if file exists in this month directory
         const filePath = path.join(monthPath, storedFilename);
-        
+
         try {
           await fs.access(filePath);
           return filePath;

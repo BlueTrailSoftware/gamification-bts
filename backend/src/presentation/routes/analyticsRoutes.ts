@@ -44,7 +44,10 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
 });
 
 // GET /analytics/admin (admin only)
-router.get('/admin', requireRole(UserRole.ADMIN), validateQuery(dateRangeQuerySchema),
+router.get(
+  '/admin',
+  requireRole(UserRole.ADMIN),
+  validateQuery(dateRangeQuerySchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const query = req.query as any;
@@ -59,8 +62,10 @@ router.get('/admin', requireRole(UserRole.ADMIN), validateQuery(dateRangeQuerySc
   }
 );
 
-// GET /analytics/leaderboard (admin only)
-router.get('/leaderboard', requireRole(UserRole.ADMIN), validateQuery(dateRangeQuerySchema),
+// GET /analytics/leaderboard (any authenticated user)
+router.get(
+  '/leaderboard',
+  validateQuery(dateRangeQuerySchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const query = req.query as any;
@@ -76,8 +81,10 @@ router.get('/leaderboard', requireRole(UserRole.ADMIN), validateQuery(dateRangeQ
   }
 );
 
-// GET /analytics/technologies (admin only)
-router.get('/technologies', requireRole(UserRole.ADMIN), validateQuery(dateRangeQuerySchema),
+// GET /analytics/technologies (any authenticated user)
+router.get(
+  '/technologies',
+  validateQuery(dateRangeQuerySchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const query = req.query as any;
@@ -93,7 +100,10 @@ router.get('/technologies', requireRole(UserRole.ADMIN), validateQuery(dateRange
 );
 
 // POST /analytics/export (admin only)
-router.post('/export', requireRole(UserRole.ADMIN), validateRequest(exportSchema),
+router.post(
+  '/export',
+  requireRole(UserRole.ADMIN),
+  validateRequest(exportSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const csv = await exportTrainingDataUseCase.execute({

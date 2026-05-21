@@ -186,9 +186,12 @@ export default function FileDownloadModal({
     setDownloadingId(file.id);
     setError(null);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/training-records/${trainingRecordId}/files/${file.id}`, {
         method: 'GET',
-        credentials: 'include',
+        headers: {
+          Authorization: token ? `Bearer ${token}` : '',
+        },
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));

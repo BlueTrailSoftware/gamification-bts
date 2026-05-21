@@ -108,6 +108,7 @@ export default function Layout() {
         <div style={logoStyle}>Training Platform</div>
         <nav style={navStyle}>
           <NavLink to="/dashboard" style={navLinkStyle}>Dashboard</NavLink>
+          <NavLink to="/courses" style={navLinkStyle}>Company Courses</NavLink>
           {isAdmin && (
             <>
               <div style={sectionLabel}>Admin</div>

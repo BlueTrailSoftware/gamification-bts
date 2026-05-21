@@ -105,6 +105,8 @@ interface RecordForm {
   description: string;
   hours: string;
   completionDate: string;
+  studyPlatform: string;
+  trainingLink: string;
 }
 const emptyForm: RecordForm = {
   userId: '',
@@ -113,7 +115,15 @@ const emptyForm: RecordForm = {
   description: '',
   hours: '',
   completionDate: '',
+  studyPlatform: '',
+  trainingLink: '',
 };
+
+function getOneYearAgoStr(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 1);
+  return d.toISOString().split('T')[0];
+}
 
 function isValidISO8601Date(value: string): boolean {
   if (!value) return true; // optional field
@@ -186,6 +196,8 @@ export default function TrainingRecordsPage() {
       description: r.description,
       hours: String(r.hours),
       completionDate: r.completionDate || '',
+      studyPlatform: r.studyPlatform || '',
+      trainingLink: r.trainingLink || '',
     });
     setFormError('');
     setShowModal(true);
@@ -224,6 +236,8 @@ export default function TrainingRecordsPage() {
         description: form.description,
         hours,
         completionDate: form.completionDate || undefined,
+        studyPlatform: form.studyPlatform || undefined,
+        trainingLink: form.trainingLink || undefined,
       };
       if (editingRecord) {
         await api.put(`/training-records/${editingRecord.id}`, {
@@ -232,6 +246,8 @@ export default function TrainingRecordsPage() {
           description: form.description,
           hours,
           completionDate: form.completionDate || null,
+          studyPlatform: form.studyPlatform || null,
+          trainingLink: form.trainingLink || null,
         });
         setSuccess('Record updated');
       } else {
@@ -365,6 +381,8 @@ export default function TrainingRecordsPage() {
               <th style={th}>Hours</th>
               <th style={th}>Files</th>
               <th style={th}>Completion Date</th>
+              <th style={th}>Platform</th>
+              <th style={th}>Link</th>
               <th style={th}>Date</th>
               <th style={th}>Actions</th>
             </tr>
@@ -372,7 +390,7 @@ export default function TrainingRecordsPage() {
           <tbody>
             {records.length === 0 ? (
               <tr>
-                <td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={8}>
+                <td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={10}>
                   No records found
                 </td>
               </tr>
@@ -417,6 +435,14 @@ export default function TrainingRecordsPage() {
                   </td>
                   <td style={td}>
                     {r.completionDate ? format(new Date(r.completionDate), 'MMM d, yyyy') : '—'}
+                  </td>
+                  <td style={td}>{r.studyPlatform || '—'}</td>
+                  <td style={td}>
+                    {r.trainingLink ? (
+                      <a href={r.trainingLink} target="_blank" rel="noopener noreferrer" style={{ color: '#4f46e5', fontSize: '0.8rem' }}>
+                        Open
+                      </a>
+                    ) : '—'}
                   </td>
                   <td style={td}>{format(new Date(r.createdAt), 'MMM d, yyyy')}</td>
                   <td style={td}>
@@ -523,8 +549,35 @@ export default function TrainingRecordsPage() {
                 <input
                   style={inputFull}
                   type="date"
+                  min={getOneYearAgoStr()}
+                  max={new Date().toISOString().split('T')[0]}
                   value={form.completionDate}
                   onChange={(e) => setForm({ ...form, completionDate: e.target.value })}
+                />
+              </div>
+              <div style={fieldGroup}>
+                <label style={labelStyle}>
+                  Study Platform{' '}
+                  <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
+                </label>
+                <input
+                  style={inputFull}
+                  placeholder="e.g. Udemy, Coursera..."
+                  value={form.studyPlatform}
+                  onChange={(e) => setForm({ ...form, studyPlatform: e.target.value })}
+                />
+              </div>
+              <div style={fieldGroup}>
+                <label style={labelStyle}>
+                  Training Link{' '}
+                  <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
+                </label>
+                <input
+                  style={inputFull}
+                  type="url"
+                  placeholder="https://..."
+                  value={form.trainingLink}
+                  onChange={(e) => setForm({ ...form, trainingLink: e.target.value })}
                 />
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>

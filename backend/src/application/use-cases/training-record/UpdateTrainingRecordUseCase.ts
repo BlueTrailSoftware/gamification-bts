@@ -4,7 +4,7 @@ import { AuditLog, AuditAction } from '../../../domain/entities/AuditLog';
 import { TrainingHours } from '../../../domain/value-objects/TrainingHours';
 import { ITrainingRecordRepository } from '../../../domain/repositories/ITrainingRecordRepository';
 import { IAuditLogRepository } from '../../../domain/repositories/IAuditLogRepository';
-import { NotFoundError } from '../../../shared/errors';
+import { NotFoundError, ValidationError } from '../../../shared/errors';
 
 export interface UpdateTrainingRecordDTO {
   technologyId?: string;
@@ -12,6 +12,8 @@ export interface UpdateTrainingRecordDTO {
   description?: string;
   hours?: number;
   completionDate?: string | null;
+  studyPlatform?: string | null;
+  trainingLink?: string | null;
 }
 
 export interface UpdateTrainingRecordContext {
@@ -36,6 +38,15 @@ export class UpdateTrainingRecordUseCase {
       throw new NotFoundError('Training record');
     }
 
+    // Validate date is not older than 1 year
+    if (dto.completionDate) {
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (new Date(dto.completionDate) < oneYearAgo) {
+        throw new ValidationError('Completion date cannot be more than 1 year in the past');
+      }
+    }
+
     // Track changes for audit log
     const changes: Record<string, { from: any; to: any }> = {};
 
@@ -46,6 +57,8 @@ export class UpdateTrainingRecordUseCase {
       description?: string;
       hours?: TrainingHours;
       completionDate?: string | null;
+      studyPlatform?: string | null;
+      trainingLink?: string | null;
     } = {};
 
     if (dto.technologyId !== undefined) {
@@ -82,6 +95,20 @@ export class UpdateTrainingRecordUseCase {
         changes.completionDate = { from: existingRecord.completionDate, to: dto.completionDate };
       }
       updateParams.completionDate = dto.completionDate;
+    }
+
+    if (dto.studyPlatform !== undefined) {
+      if (dto.studyPlatform !== existingRecord.studyPlatform) {
+        changes.studyPlatform = { from: existingRecord.studyPlatform, to: dto.studyPlatform };
+      }
+      updateParams.studyPlatform = dto.studyPlatform;
+    }
+
+    if (dto.trainingLink !== undefined) {
+      if (dto.trainingLink !== existingRecord.trainingLink) {
+        changes.trainingLink = { from: existingRecord.trainingLink, to: dto.trainingLink };
+      }
+      updateParams.trainingLink = dto.trainingLink;
     }
 
     // Use entity's update() method which handles updatedAt timestamp

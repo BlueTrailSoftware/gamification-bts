@@ -3,22 +3,90 @@ import { format } from 'date-fns';
 import api from '@services/api';
 import Loading from '@components/Loading';
 import ErrorMessage from '@components/ErrorMessage';
-import type { Technology } from '@app-types/index';
+import type { Technology, User } from '@app-types/index';
 
-const table: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' };
-const th: React.CSSProperties = { textAlign: 'left', padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', borderBottom: '2px solid #e2e8f0', backgroundColor: '#f8fafc' };
-const td: React.CSSProperties = { padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#334155', borderBottom: '1px solid #f1f5f9' };
-const btnPrimary: React.CSSProperties = { padding: '0.5rem 1rem', backgroundColor: '#4f46e5', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 };
+const table: React.CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  backgroundColor: '#fff',
+  borderRadius: 8,
+  overflow: 'hidden',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+};
+const th: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.75rem 1rem',
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  color: '#64748b',
+  borderBottom: '2px solid #e2e8f0',
+  backgroundColor: '#f8fafc',
+};
+const td: React.CSSProperties = {
+  padding: '0.75rem 1rem',
+  fontSize: '0.875rem',
+  color: '#334155',
+  borderBottom: '1px solid #f1f5f9',
+};
+const btnPrimary: React.CSSProperties = {
+  padding: '0.5rem 1rem',
+  backgroundColor: '#4f46e5',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 4,
+  cursor: 'pointer',
+  fontSize: '0.8rem',
+  fontWeight: 500,
+};
 const btnDanger: React.CSSProperties = { ...btnPrimary, backgroundColor: '#ef4444' };
 const btnSecondary: React.CSSProperties = { ...btnPrimary, backgroundColor: '#64748b' };
-const inputStyle: React.CSSProperties = { width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.875rem', boxSizing: 'border-box' };
-const labelStyle: React.CSSProperties = { display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', fontWeight: 500, color: '#334155' };
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '0.5rem 0.75rem',
+  border: '1px solid #cbd5e1',
+  borderRadius: 4,
+  fontSize: '0.875rem',
+  boxSizing: 'border-box',
+};
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: '0.25rem',
+  fontSize: '0.8rem',
+  fontWeight: 500,
+  color: '#334155',
+};
 const fieldGroup: React.CSSProperties = { marginBottom: '0.75rem' };
-const overlay: React.CSSProperties = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 };
-const modal: React.CSSProperties = { backgroundColor: '#fff', borderRadius: 8, padding: '1.5rem', width: 380, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' };
-const successMsg: React.CSSProperties = { padding: '0.5rem 0.75rem', backgroundColor: '#dcfce7', color: '#166534', borderRadius: 4, fontSize: '0.8rem', marginBottom: '1rem' };
+const overlay: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: 'rgba(0,0,0,0.3)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+};
+const modal: React.CSSProperties = {
+  backgroundColor: '#fff',
+  borderRadius: 8,
+  padding: '1.5rem',
+  width: 380,
+  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+};
+const successMsg: React.CSSProperties = {
+  padding: '0.5rem 0.75rem',
+  backgroundColor: '#dcfce7',
+  color: '#166534',
+  borderRadius: 4,
+  fontSize: '0.8rem',
+  marginBottom: '1rem',
+};
 
-interface TechForm { name: string; category: string; }
+interface TechForm {
+  name: string;
+  category: string;
+}
 const emptyForm: TechForm = { name: '', category: '' };
 
 export default function TechnologiesPage() {
@@ -31,25 +99,78 @@ export default function TechnologiesPage() {
   const [form, setForm] = useState<TechForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [showUsersModal, setShowUsersModal] = useState(false);
+  const [selectedTechName, setSelectedTechName] = useState('');
+  const [techUsers, setTechUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   const fetchTechs = () => {
     setLoading(true);
-    api.get<Technology[]>('/technologies')
-      .then((res) => { setTechs(res.data); setError(''); })
+    api
+      .get<Technology[]>('/technologies')
+      .then((res) => {
+        setTechs(res.data);
+        setError('');
+      })
       .catch((err) => setError(err.response?.data?.message || 'Failed to load technologies'))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchTechs(); }, []);
+  useEffect(() => {
+    fetchTechs();
+  }, []);
 
-  const openCreate = () => { setEditing(null); setForm(emptyForm); setFormError(''); setShowModal(true); };
-  const openEdit = (t: Technology) => { setEditing(t); setForm({ name: t.name, category: t.category }); setFormError(''); setShowModal(true); };
-  const closeModal = () => { setShowModal(false); setEditing(null); };
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setFormError('');
+    setShowModal(true);
+  };
+  const openEdit = (t: Technology) => {
+    setEditing(t);
+    setForm({ name: t.name, category: t.category });
+    setFormError('');
+    setShowModal(true);
+  };
+  const closeModal = () => {
+    setShowModal(false);
+    setEditing(null);
+  };
+
+  const openUsersModal = async (t: Technology) => {
+    setShowUsersModal(true);
+    setSelectedTechName(t.name);
+    setTechUsers([]);
+    setUsersLoading(true);
+    try {
+      const res = await api.get<User[]>('/users');
+      const allUsers = res.data;
+      // Get training records for this technology
+      const recordsRes = await api.get<any[]>('/training-records');
+      const techRecords = recordsRes.data.filter((r) => r.technologyId === t.id);
+      const userIds = [...new Set(techRecords.map((r) => r.userId))];
+      const usersWithTech = allUsers.filter((u) => userIds.includes(u.id));
+      setTechUsers(usersWithTech);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to load users');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const closeUsersModal = () => {
+    setShowUsersModal(false);
+    setTechUsers([]);
+    setSelectedTechName('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (!form.name.trim() || !form.category.trim()) { setFormError('Name and category are required'); return; }
+    if (!form.name.trim() || !form.category.trim()) {
+      setFormError('Name and category are required');
+      return;
+    }
     setSubmitting(true);
     try {
       if (editing) {
@@ -85,11 +206,26 @@ export default function TechnologiesPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <h2 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem', fontWeight: 700 }}>Technologies</h2>
-        <button style={btnPrimary} onClick={openCreate}>Create Technology</button>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <h2 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem', fontWeight: 700 }}>
+          Technologies
+        </h2>
+        <button style={btnPrimary} onClick={openCreate}>
+          Create Technology
+        </button>
       </div>
-      {error && <div style={{ marginBottom: '1rem' }}><ErrorMessage message={error} /></div>}
+      {error && (
+        <div style={{ marginBottom: '1rem' }}>
+          <ErrorMessage message={error} />
+        </div>
+      )}
       {success && <div style={successMsg}>{success}</div>}
       <table style={table}>
         <thead>
@@ -108,8 +244,15 @@ export default function TechnologiesPage() {
               <td style={td}>{format(new Date(t.createdAt), 'MMM d, yyyy')}</td>
               <td style={td}>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button style={btnSecondary} onClick={() => openEdit(t)}>Edit</button>
-                  <button style={btnDanger} onClick={() => handleDelete(t)}>Delete</button>
+                  <button style={btnSecondary} onClick={() => openUsersModal(t)}>
+                    Users
+                  </button>
+                  <button style={btnSecondary} onClick={() => openEdit(t)}>
+                    Edit
+                  </button>
+                  <button style={btnDanger} onClick={() => handleDelete(t)}>
+                    Delete
+                  </button>
                 </div>
               </td>
             </tr>
@@ -120,16 +263,87 @@ export default function TechnologiesPage() {
       {showModal && (
         <div style={overlay} onClick={closeModal}>
           <div style={modal} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 1rem', color: '#1e293b' }}>{editing ? 'Edit Technology' : 'Create Technology'}</h3>
-            {formError && <div style={{ marginBottom: '0.75rem' }}><ErrorMessage message={formError} /></div>}
+            <h3 style={{ margin: '0 0 1rem', color: '#1e293b' }}>
+              {editing ? 'Edit Technology' : 'Create Technology'}
+            </h3>
+            {formError && (
+              <div style={{ marginBottom: '0.75rem' }}>
+                <ErrorMessage message={formError} />
+              </div>
+            )}
             <form onSubmit={handleSubmit}>
-              <div style={fieldGroup}><label style={labelStyle}>Name</label><input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div style={fieldGroup}><label style={labelStyle}>Category</label><input style={inputStyle} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
+              <div style={fieldGroup}>
+                <label style={labelStyle}>Name</label>
+                <input
+                  style={inputStyle}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+              <div style={fieldGroup}>
+                <label style={labelStyle}>Category</label>
+                <input
+                  style={inputStyle}
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                />
+              </div>
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                <button type="button" style={btnSecondary} onClick={closeModal}>Cancel</button>
-                <button type="submit" style={{ ...btnPrimary, opacity: submitting ? 0.7 : 1 }} disabled={submitting}>{submitting ? 'Saving...' : 'Save'}</button>
+                <button type="button" style={btnSecondary} onClick={closeModal}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ ...btnPrimary, opacity: submitting ? 0.7 : 1 }}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Saving...' : 'Save'}
+                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showUsersModal && (
+        <div style={overlay} onClick={closeUsersModal}>
+          <div style={{ ...modal, width: 500 }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 1rem', color: '#1e293b' }}>Users - {selectedTechName}</h3>
+            {usersLoading ? (
+              <Loading />
+            ) : techUsers.length === 0 ? (
+              <p style={{ color: '#64748b', textAlign: 'center', padding: '2rem' }}>
+                No users have courses in this technology
+              </p>
+            ) : (
+              <table style={table}>
+                <thead>
+                  <tr>
+                    <th style={th}>Username</th>
+                    <th style={th}>Name</th>
+                    <th style={th}>Email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {techUsers.map((u) => (
+                    <tr key={u.id}>
+                      <td style={td}>{u.username}</td>
+                      <td style={td}>
+                        {u.displayName ||
+                          [u.firstName, u.lastName].filter(Boolean).join(' ') ||
+                          '-'}
+                      </td>
+                      <td style={td}>{u.email}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button style={btnSecondary} onClick={closeUsersModal}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -13,6 +13,7 @@ import type {
   LeaderboardEntry,
   TrainingRecord,
   TrainingFile,
+  TechnologySummary,
 } from '@app-types/index';
 
 const cardRow: React.CSSProperties = { display: 'flex', gap: '1rem', marginBottom: '1.5rem' };
@@ -148,6 +149,8 @@ interface RecordForm {
   description: string;
   hours: string;
   completedDate: string;
+  studyPlatform: string;
+  trainingLink: string;
 }
 const emptyForm: RecordForm = {
   technologyId: '',
@@ -155,13 +158,22 @@ const emptyForm: RecordForm = {
   description: '',
   hours: '',
   completedDate: '',
+  studyPlatform: '',
+  trainingLink: '',
 };
+
+function getOneYearAgoStr(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 1);
+  return d.toISOString().split('T')[0];
+}
 
 export default function DashboardPage() {
   const { user, isAdmin } = useAuth();
   const [employeeData, setEmployeeData] = useState<EmployeeDashboard | null>(null);
   const [adminData, setAdminData] = useState<AdminAnalytics | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [technologyRanking, setTechnologyRanking] = useState<TechnologySummary[]>([]);
   const [recentRecords, setRecentRecords] = useState<TrainingRecord[]>([]);
   const [technologies, setTechnologies] = useState<Technology[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,17 +191,21 @@ export default function DashboardPage() {
     setLoading(true);
     setError('');
     try {
-      const [techRes] = await Promise.all([api.get<Technology[]>('/technologies')]);
+      const [techRes, leaderboardRes, techRankingRes] = await Promise.all([
+        api.get<Technology[]>('/technologies'),
+        api.get<LeaderboardEntry[]>('/analytics/leaderboard'),
+        api.get<TechnologySummary[]>('/analytics/technologies'),
+      ]);
       setTechnologies(techRes.data);
+      setLeaderboard(leaderboardRes.data);
+      setTechnologyRanking(techRankingRes.data);
 
       if (isAdmin) {
-        const [analyticsRes, leaderboardRes, recordsRes] = await Promise.all([
+        const [analyticsRes, recordsRes] = await Promise.all([
           api.get<AdminAnalytics>('/analytics/admin'),
-          api.get<LeaderboardEntry[]>('/analytics/leaderboard'),
           api.get<TrainingRecord[]>('/training-records'),
         ]);
         setAdminData(analyticsRes.data);
-        setLeaderboard(leaderboardRes.data);
         setRecentRecords(recordsRes.data);
       } else {
         const res = await api.get<EmployeeDashboard>('/analytics/dashboard');
@@ -234,6 +250,8 @@ export default function DashboardPage() {
         description: form.description || ' ',
         hours,
         completedDate: form.completedDate || undefined,
+        studyPlatform: form.studyPlatform || undefined,
+        trainingLink: form.trainingLink || undefined,
       });
       setSuccess('Training record created');
       closeModal();
@@ -440,6 +458,46 @@ export default function DashboardPage() {
           </table>
         </div>
 
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={sectionTitle}>Technology Ranking</div>
+          <table style={table}>
+            <thead>
+              <tr>
+                <th style={th}>Rank</th>
+                <th style={th}>Technology</th>
+                <th style={th}>Total Hours</th>
+                <th style={th}>Records</th>
+                <th style={th}>Employees</th>
+              </tr>
+            </thead>
+            <tbody>
+              {technologyRanking.length === 0 ? (
+                <tr>
+                  <td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={5}>
+                    No data yet
+                  </td>
+                </tr>
+              ) : (
+                technologyRanking
+                  .sort((a, b) => b.totalHours - a.totalHours)
+                  .map((tech, index) => (
+                    <tr key={tech.technologyId}>
+                      <td style={td}>
+                        <span style={rankBadge(index + 1)}>{index + 1}</span>
+                      </td>
+                      <td style={{ ...td, fontWeight: 500 }}>{tech.technologyName}</td>
+                      <td style={{ ...td, fontWeight: 600, color: '#4f46e5' }}>
+                        {tech.totalHours.toFixed(1)}
+                      </td>
+                      <td style={td}>{tech.recordCount}</td>
+                      <td style={td}>{tech.employeeCount}</td>
+                    </tr>
+                  ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
         <div>
           <div style={sectionTitle}>Recent Records</div>
           <table style={table}>
@@ -640,6 +698,84 @@ export default function DashboardPage() {
         )}
       </div>
 
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={sectionTitle}>Employee Ranking</div>
+        <table style={table}>
+          <thead>
+            <tr>
+              <th style={th}>Rank</th>
+              <th style={th}>Employee</th>
+              <th style={th}>Email</th>
+              <th style={th}>Total Hours</th>
+              <th style={th}>Records</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leaderboard.length === 0 ? (
+              <tr>
+                <td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={5}>
+                  No data yet
+                </td>
+              </tr>
+            ) : (
+              leaderboard.map((e) => (
+                <tr key={e.userId}>
+                  <td style={td}>
+                    <span style={rankBadge(e.rank)}>{e.rank}</span>
+                  </td>
+                  <td style={{ ...td, fontWeight: 500 }}>{e.displayName || e.username}</td>
+                  <td style={td}>{e.email}</td>
+                  <td style={{ ...td, fontWeight: 600, color: '#4f46e5' }}>
+                    {e.totalHours.toFixed(1)}
+                  </td>
+                  <td style={td}>{e.recordCount}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={sectionTitle}>Technology Ranking</div>
+        <table style={table}>
+          <thead>
+            <tr>
+              <th style={th}>Rank</th>
+              <th style={th}>Technology</th>
+              <th style={th}>Total Hours</th>
+              <th style={th}>Records</th>
+              <th style={th}>Employees</th>
+            </tr>
+          </thead>
+          <tbody>
+            {technologyRanking.length === 0 ? (
+              <tr>
+                <td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={5}>
+                  No data yet
+                </td>
+              </tr>
+            ) : (
+              technologyRanking
+                .sort((a, b) => b.totalHours - a.totalHours)
+                .map((tech, index) => (
+                  <tr key={tech.technologyId}>
+                    <td style={td}>
+                      <span style={rankBadge(index + 1)}>{index + 1}</span>
+                    </td>
+                    <td style={{ ...td, fontWeight: 500 }}>{tech.technologyName}</td>
+                    <td style={{ ...td, fontWeight: 600, color: '#4f46e5' }}>
+                      {tech.totalHours.toFixed(1)}
+                    </td>
+                    <td style={td}>{tech.recordCount}</td>
+                    <td style={td}>{tech.employeeCount}</td>
+                  </tr>
+                ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
       <div>
         <div style={sectionTitle}>Recent Records</div>
         <table style={table}>
@@ -800,8 +936,29 @@ export default function DashboardPage() {
               <input
                 style={inputStyle}
                 type="date"
+                min={getOneYearAgoStr()}
+                max={new Date().toISOString().split('T')[0]}
                 value={form.completedDate}
                 onChange={(e) => setForm({ ...form, completedDate: e.target.value })}
+              />
+            </div>
+            <div style={fieldGroup}>
+              <label style={labelStyle}>Study Platform</label>
+              <input
+                style={inputStyle}
+                placeholder="e.g. Udemy, Coursera, YouTube..."
+                value={form.studyPlatform}
+                onChange={(e) => setForm({ ...form, studyPlatform: e.target.value })}
+              />
+            </div>
+            <div style={fieldGroup}>
+              <label style={labelStyle}>Training Link</label>
+              <input
+                style={inputStyle}
+                type="url"
+                placeholder="https://..."
+                value={form.trainingLink}
+                onChange={(e) => setForm({ ...form, trainingLink: e.target.value })}
               />
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
