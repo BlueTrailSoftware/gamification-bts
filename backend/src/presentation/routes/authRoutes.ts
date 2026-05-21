@@ -60,7 +60,10 @@ router.get('/oauth/callback',
       let userJson: object;
 
       if (oauthUser.token && oauthUser.user) {
-        token = oauthUser.token;
+        // Passport provisioned the user but generateJWT doesn't create a DB session.
+        // Create a proper session so validateToken works on subsequent requests.
+        const { token: sessionToken } = await tokenManagementService.createSession(oauthUser.user);
+        token = sessionToken;
         userJson = oauthUser.user.toJSON ? oauthUser.user.toJSON() : oauthUser.user;
       } else {
         const result = await loginWithGoogleOAuthUseCase.execute({
