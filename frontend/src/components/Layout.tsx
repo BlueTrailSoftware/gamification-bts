@@ -123,7 +123,7 @@ export default function Layout() {
           )}
         </nav>
         <div style={{ padding: '1rem', borderTop: '1px solid #312e81' }}>
-          <img src="/logo.png" alt="Company logo" style={{ width: '100%', maxHeight: 48, objectFit: 'contain', opacity: 0.85 }} />
+          <img src="/logo.png" alt="Company logo" style={{ width: '100%', maxHeight: 80, objectFit: 'contain', opacity: 0.85 }} />
         </div>
       </aside>
       <div style={mainStyle}>
