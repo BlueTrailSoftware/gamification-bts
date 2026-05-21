@@ -11,6 +11,8 @@ import {
   errorHandler,
 } from './presentation/middleware';
 import apiRoutes from './presentation/routes';
+import { GoogleOAuthService } from './infrastructure/auth/GoogleOAuthService';
+import { userRepository, authenticationService } from './presentation/container';
 
 // Load environment variables
 dotenv.config();
@@ -34,6 +36,18 @@ app.use(createRateLimiter());
 
 // Passport initialization (for Google OAuth)
 app.use(passport.initialize());
+
+// Register Google OAuth strategy
+new GoogleOAuthService(
+  {
+    clientID: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:8000/api/auth/oauth/callback',
+    allowedDomain: process.env.ALLOWED_EMAIL_DOMAIN || 'bluetrailsoft.com',
+  },
+  userRepository,
+  authenticationService
+);
 
 // Health check endpoint with database connectivity check
 app.get('/health', async (_req, res) => {
