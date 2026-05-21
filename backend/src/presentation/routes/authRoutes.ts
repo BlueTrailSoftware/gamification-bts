@@ -39,8 +39,8 @@ router.post('/login', validateRequest(loginSchema), async (req: Request, res: Re
   }
 });
 
-// POST /auth/oauth/google - Initiate Google OAuth
-router.post('/oauth/google', (req: Request, res: Response, next: NextFunction) => {
+// GET /auth/oauth/google - Initiate Google OAuth
+router.get('/oauth/google', (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });
 
