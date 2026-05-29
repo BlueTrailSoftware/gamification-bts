@@ -76,7 +76,7 @@ export class CreateTrainingRecordUseCase {
       description: dto.description,
       hours: trainingHours,
       completedDate: dto.completedDate ? new Date(dto.completedDate) : null,
-      completionDate: dto.completionDate ?? null,
+      completionDate: dto.completionDate ?? dto.completedDate ?? null,
       studyPlatform: dto.studyPlatform ?? null,
       trainingLink: dto.trainingLink ?? null,
     });

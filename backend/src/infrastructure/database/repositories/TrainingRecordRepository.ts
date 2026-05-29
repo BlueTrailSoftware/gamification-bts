@@ -17,8 +17,8 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
   async create(record: TrainingRecord): Promise<TrainingRecord> {
     const pool = getDatabasePool();
     const query = `
-      INSERT INTO training_records (id, user_id, technology_id, title, description, hours, completed_date, completion_date, study_platform, training_link, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      INSERT INTO training_records (id, user_id, technology_id, title, description, hours, completion_date, study_platform, training_link, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
 
@@ -29,7 +29,6 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
       record.title,
       record.description,
       record.hours.getValue(),
-      record.completedDate,
       record.completionDate,
       record.studyPlatform,
       record.trainingLink,
