@@ -166,7 +166,7 @@ FROM (VALUES
   ('React', 'Frontend'),
   ('Node.js', 'Backend'),
   ('Python', 'Programming'),
-  ('QA Testing', 'Testing'),
+  ('Manual & Functional Testing', 'Testing'),
   ('DevOps', 'Operations'),
   ('Cloud Computing', 'Infrastructure'),
   ('Database Design', 'Data'),
