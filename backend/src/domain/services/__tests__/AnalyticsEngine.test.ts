@@ -6,16 +6,16 @@ import { TrainingHours } from '../../value-objects/TrainingHours';
 describe('AnalyticsEngine', () => {
   let analyticsEngine: AnalyticsEngine;
   let sampleRecords: TrainingRecord[];
-  let technologyMap: Map<string, { name: string; category: string }>;
+  let technologyMap: Map<string, { name: string; categoryId: string; categoryName: string }>;
   let userMap: Map<string, { username: string; displayName: string; email: string }>;
 
   beforeEach(() => {
     analyticsEngine = new AnalyticsEngine();
 
     technologyMap = new Map([
-      ['tech-1', { name: 'JavaScript', category: 'Programming' }],
-      ['tech-2', { name: 'React', category: 'Frontend' }],
-      ['tech-3', { name: 'Node.js', category: 'Backend' }],
+      ['tech-1', { name: 'JavaScript', categoryId: 'cat-1', categoryName: 'Programming' }],
+      ['tech-2', { name: 'React', categoryId: 'cat-2', categoryName: 'Frontend' }],
+      ['tech-3', { name: 'Node.js', categoryId: 'cat-3', categoryName: 'Backend' }],
     ]);
 
     userMap = new Map([

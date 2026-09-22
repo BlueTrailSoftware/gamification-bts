@@ -63,6 +63,29 @@ export default function AdminDashboardPage() {
             <div style={card}><div style={cardLabel}>Total Records</div><div style={cardValue}>{data.totalRecords}</div></div>
             <div style={card}><div style={cardLabel}>Employees</div><div style={cardValue}>{data.employeeCount}</div></div>
           </div>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '0.75rem' }}>Hours by Category</div>
+          <table style={{ ...table, marginBottom: '1.5rem' }}>
+            <thead>
+              <tr>
+                <th style={th}>Category</th>
+                <th style={th}>Total Hours</th>
+                <th style={th}>Records</th>
+                <th style={th}>Employees</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.hoursByCategory.length === 0 ? (
+                <tr><td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={4}>No data</td></tr>
+              ) : data.hoursByCategory.map((c) => (
+                <tr key={c.categoryId}>
+                  <td style={td}>{c.categoryName}</td>
+                  <td style={td}>{c.totalHours.toFixed(1)}</td>
+                  <td style={td}>{c.recordCount}</td>
+                  <td style={td}>{c.employeeCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           <div style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '0.75rem' }}>Hours by Technology</div>
           <table style={table}>
             <thead>

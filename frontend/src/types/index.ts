@@ -39,10 +39,17 @@ export interface TrainingFile {
   uploadedAt: string;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 export interface Technology {
   id: string;
   name: string;
-  category: string;
+  categoryId: string;
+  categoryName: string;
   createdAt: string;
 }
 
@@ -55,12 +62,23 @@ export interface EmployeeDashboard {
   totalHours: number;
   totalRecords: number;
   hoursByTechnology: TechnologySummary[];
+  hoursByCategory: CategorySummary[];
   recentRecords: TrainingRecord[];
 }
 
 export interface TechnologySummary {
   technologyId: string;
   technologyName: string;
+  categoryId: string;
+  categoryName: string;
+  totalHours: number;
+  recordCount: number;
+  employeeCount: number;
+}
+
+export interface CategorySummary {
+  categoryId: string;
+  categoryName: string;
   totalHours: number;
   recordCount: number;
   employeeCount: number;
@@ -71,6 +89,7 @@ export interface AdminAnalytics {
   totalRecords: number;
   employeeCount: number;
   hoursByTechnology: TechnologySummary[];
+  hoursByCategory: CategorySummary[];
 }
 
 export interface LeaderboardEntry {

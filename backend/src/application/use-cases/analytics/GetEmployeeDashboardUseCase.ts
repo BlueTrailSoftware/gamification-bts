@@ -2,7 +2,7 @@ import { TrainingRecord } from '../../../domain/entities/TrainingRecord';
 import { UserRole } from '../../../domain/entities/User';
 import { ITrainingRecordRepository } from '../../../domain/repositories/ITrainingRecordRepository';
 import { ITechnologyRepository } from '../../../domain/repositories/ITechnologyRepository';
-import { AnalyticsEngine, TechnologySummary } from '../../../domain/services/AnalyticsEngine';
+import { AnalyticsEngine, CategorySummary, TechnologySummary } from '../../../domain/services/AnalyticsEngine';
 import { AuthorizationError, ValidationError } from '../../../shared/errors';
 
 export interface GetEmployeeDashboardContext {
@@ -14,6 +14,7 @@ export interface EmployeeDashboardDTO {
   totalHours: number;
   totalRecords: number;
   hoursByTechnology: TechnologySummary[];
+  hoursByCategory: CategorySummary[];
   recentRecords: TrainingRecord[];
 }
 
@@ -42,13 +43,20 @@ export class GetEmployeeDashboardUseCase {
 
     // Build technology map from all technologies
     const technologies = await this.technologyRepository.listAll();
-    const technologyMap = new Map<string, { name: string; category: string }>();
+    const technologyMap = new Map<string, { name: string; categoryId: string; categoryName: string }>();
     for (const tech of technologies) {
-      technologyMap.set(tech.id, { name: tech.name, category: tech.category });
+      technologyMap.set(tech.id, {
+        name: tech.name,
+        categoryId: tech.categoryId,
+        categoryName: tech.categoryName,
+      });
     }
 
     // Group records by technology
     const hoursByTechnology = this.analyticsEngine.groupByTechnology(records, technologyMap);
+
+    // Group records by technology category
+    const hoursByCategory = this.analyticsEngine.groupByCategory(records, technologyMap);
 
     // Sort records chronologically (most recent first)
     const recentRecords = [...records].sort(
@@ -59,6 +67,7 @@ export class GetEmployeeDashboardUseCase {
       totalHours,
       totalRecords: records.length,
       hoursByTechnology,
+      hoursByCategory,
       recentRecords,
     };
   }

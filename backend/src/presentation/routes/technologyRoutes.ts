@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { validateRequest, validateParams, requireRole } from '../middleware';
-import { technologyRepository, tokenManagementService } from '../container';
+import { categoryRepository, technologyRepository, tokenManagementService } from '../container';
 import { createAuthenticateMiddleware } from '../middleware';
 import { UserRole } from '../../domain/entities/User';
 import { Technology } from '../../domain/entities/Technology';
@@ -14,13 +14,17 @@ const idParamsSchema = z.object({ id: z.string().uuid('Invalid technology ID') }
 
 const createTechnologySchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  category: z.string().min(1, 'Category is required').max(100),
+  categoryId: z.string().uuid('Invalid category ID'),
 });
 
 const updateTechnologySchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  category: z.string().min(1).max(100).optional(),
+  categoryId: z.string().uuid('Invalid category ID').optional(),
 }).refine(data => Object.keys(data).length > 0, { message: 'At least one field must be provided' });
+
+const categoryNotFoundResponse = {
+  error: { code: 'VALIDATION_ERROR', message: 'Category not found' },
+};
 
 // All technology routes require authentication
 router.use(authenticate);
@@ -39,10 +43,16 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
 router.post('/', requireRole(UserRole.ADMIN), validateRequest(createTechnologySchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const category = await categoryRepository.findById(req.body.categoryId);
+      if (!category) {
+        res.status(400).json(categoryNotFoundResponse);
+        return;
+      }
       const technology = Technology.create({
         id: uuidv4(),
         name: req.body.name,
-        category: req.body.category,
+        categoryId: category.id,
+        categoryName: category.name,
       });
       const created = await technologyRepository.create(technology);
       res.status(201).json(created.toJSON());
@@ -60,6 +70,13 @@ router.put('/:id', requireRole(UserRole.ADMIN), validateParams(idParamsSchema), 
       if (!existing) {
         res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Technology not found' } });
         return;
+      }
+      if (req.body.categoryId !== undefined) {
+        const category = await categoryRepository.findById(req.body.categoryId);
+        if (!category) {
+          res.status(400).json(categoryNotFoundResponse);
+          return;
+        }
       }
       const updated = await technologyRepository.update(req.params.id, req.body);
       res.json(updated.toJSON());

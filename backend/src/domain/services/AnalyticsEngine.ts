@@ -4,6 +4,16 @@ import { DateRange } from '../value-objects/DateRange';
 export interface TechnologySummary {
   technologyId: string;
   technologyName: string;
+  categoryId: string;
+  categoryName: string;
+  totalHours: number;
+  recordCount: number;
+  employeeCount: number;
+}
+
+export interface CategorySummary {
+  categoryId: string;
+  categoryName: string;
   totalHours: number;
   recordCount: number;
   employeeCount: number;
@@ -38,7 +48,7 @@ export class AnalyticsEngine {
    */
   groupByTechnology(
     records: TrainingRecord[],
-    technologyMap: Map<string, { name: string; category: string }>
+    technologyMap: Map<string, { name: string; categoryId: string; categoryName: string }>
   ): TechnologySummary[] {
     if (!records || records.length === 0) {
       return [];
@@ -75,6 +85,66 @@ export class AnalyticsEngine {
       summaries.push({
         technologyId,
         technologyName: technology?.name || 'Unknown',
+        categoryId: technology?.categoryId || '',
+        categoryName: technology?.categoryName || 'Unknown',
+        totalHours: data.totalHours,
+        recordCount: data.recordCount,
+        employeeCount: data.userIds.size,
+      });
+    }
+
+    // Sort by total hours descending
+    return summaries.sort((a, b) => b.totalHours - a.totalHours);
+  }
+
+  /**
+   * Group training records by technology category and calculate aggregates
+   * Validates: Requirements 8.4, 10.1, 10.2
+   */
+  groupByCategory(
+    records: TrainingRecord[],
+    technologyMap: Map<string, { name: string; categoryId: string; categoryName: string }>
+  ): CategorySummary[] {
+    if (!records || records.length === 0) {
+      return [];
+    }
+
+    const categoryGroups = new Map<string, {
+      categoryName: string;
+      totalHours: number;
+      recordCount: number;
+      userIds: Set<string>;
+    }>();
+
+    // Group records by the category of their technology
+    for (const record of records) {
+      const technology = technologyMap.get(record.technologyId);
+      const categoryId = technology?.categoryId || '';
+      const categoryName = technology?.categoryName || 'Unknown';
+      const hours = record.hours.getValue();
+
+      const existing = categoryGroups.get(categoryId);
+
+      if (existing) {
+        existing.totalHours += hours;
+        existing.recordCount += 1;
+        existing.userIds.add(record.userId);
+      } else {
+        categoryGroups.set(categoryId, {
+          categoryName,
+          totalHours: hours,
+          recordCount: 1,
+          userIds: new Set([record.userId]),
+        });
+      }
+    }
+
+    // Convert to array of summaries
+    const summaries: CategorySummary[] = [];
+    for (const [categoryId, data] of categoryGroups.entries()) {
+      summaries.push({
+        categoryId,
+        categoryName: data.categoryName,
         totalHours: data.totalHours,
         recordCount: data.recordCount,
         employeeCount: data.userIds.size,
@@ -183,7 +253,7 @@ export class AnalyticsEngine {
   calculateUserHoursByTechnology(
     records: TrainingRecord[],
     userId: string,
-    technologyMap: Map<string, { name: string; category: string }>
+    technologyMap: Map<string, { name: string; categoryId: string; categoryName: string }>
   ): TechnologySummary[] {
     const userRecords = records.filter(record => record.userId === userId);
     return this.groupByTechnology(userRecords, technologyMap);

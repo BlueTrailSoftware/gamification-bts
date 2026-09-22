@@ -14,7 +14,7 @@ describe('ExportTrainingDataUseCase', () => {
   let mockTechnologyRepo: jest.Mocked<ITechnologyRepository>;
   let mockUserRepo: jest.Mocked<IUserRepository>;
 
-  const tech = Technology.create({ id: 'tech-1', name: 'TypeScript', category: 'Programming' });
+  const tech = Technology.create({ id: 'tech-1', name: 'TypeScript', categoryId: 'cat-1', categoryName: 'Programming' });
 
   const userWithName = User.create({
     id: 'user-1',

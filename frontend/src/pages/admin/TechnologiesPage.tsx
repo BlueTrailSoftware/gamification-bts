@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import api from '@services/api';
 import Loading from '@components/Loading';
 import ErrorMessage from '@components/ErrorMessage';
-import type { Technology, User } from '@app-types/index';
+import type { Category, Technology, User } from '@app-types/index';
 
 const table: React.CSSProperties = {
   width: '100%',
@@ -85,12 +85,13 @@ const successMsg: React.CSSProperties = {
 
 interface TechForm {
   name: string;
-  category: string;
+  categoryId: string;
 }
-const emptyForm: TechForm = { name: '', category: '' };
+const emptyForm: TechForm = { name: '', categoryId: '' };
 
 export default function TechnologiesPage() {
   const [techs, setTechs] = useState<Technology[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -116,8 +117,16 @@ export default function TechnologiesPage() {
       .finally(() => setLoading(false));
   };
 
+  const fetchCategories = () => {
+    api
+      .get<Category[]>('/categories')
+      .then((res) => setCategories(res.data))
+      .catch((err) => setError(err.response?.data?.message || 'Failed to load categories'));
+  };
+
   useEffect(() => {
     fetchTechs();
+    fetchCategories();
   }, []);
 
   const openCreate = () => {
@@ -128,7 +137,7 @@ export default function TechnologiesPage() {
   };
   const openEdit = (t: Technology) => {
     setEditing(t);
-    setForm({ name: t.name, category: t.category });
+    setForm({ name: t.name, categoryId: t.categoryId });
     setFormError('');
     setShowModal(true);
   };
@@ -167,7 +176,7 @@ export default function TechnologiesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (!form.name.trim() || !form.category.trim()) {
+    if (!form.name.trim() || !form.categoryId) {
       setFormError('Name and category are required');
       return;
     }
@@ -240,7 +249,7 @@ export default function TechnologiesPage() {
           {techs.map((t) => (
             <tr key={t.id}>
               <td style={{ ...td, fontWeight: 500 }}>{t.name}</td>
-              <td style={td}>{t.category}</td>
+              <td style={td}>{t.categoryName}</td>
               <td style={td}>{format(new Date(t.createdAt), 'MMM d, yyyy')}</td>
               <td style={td}>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -282,11 +291,18 @@ export default function TechnologiesPage() {
               </div>
               <div style={fieldGroup}>
                 <label style={labelStyle}>Category</label>
-                <input
+                <select
                   style={inputStyle}
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                />
+                  value={form.categoryId}
+                  onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                >
+                  <option value="">Select category...</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                 <button type="button" style={btnSecondary} onClick={closeModal}>

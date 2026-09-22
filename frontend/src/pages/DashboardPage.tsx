@@ -898,7 +898,7 @@ export default function DashboardPage() {
                 <option value="">Select technology...</option>
                 {technologies.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name} ({t.category})
+                    {t.name} ({t.categoryName})
                   </option>
                 ))}
               </select>

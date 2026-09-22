@@ -73,6 +73,7 @@ export default function AnalyticsPage() {
         <table style={table}>
           <thead>
             <tr>
+              <th style={th}>Category</th>
               <th style={th}>Technology</th>
               <th style={th}>Total Hours</th>
               <th style={th}>Records</th>
@@ -81,9 +82,10 @@ export default function AnalyticsPage() {
           </thead>
           <tbody>
             {data.length === 0 ? (
-              <tr><td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={4}>No data</td></tr>
+              <tr><td style={{ ...td, textAlign: 'center', color: '#94a3b8' }} colSpan={5}>No data</td></tr>
             ) : data.map((t) => (
               <tr key={t.technologyId}>
+                <td style={td}>{t.categoryName}</td>
                 <td style={{ ...td, fontWeight: 500 }}>{t.technologyName}</td>
                 <td style={{ ...td, fontWeight: 600, color: '#4f46e5' }}>{t.totalHours.toFixed(1)}</td>
                 <td style={td}>{t.recordCount}</td>

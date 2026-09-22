@@ -6,12 +6,14 @@ describe('Technology Entity', () => {
       const tech = Technology.create({
         id: '123',
         name: 'JavaScript',
-        category: 'Programming',
+        categoryId: 'cat-1',
+        categoryName: 'Programming',
       });
 
       expect(tech.id).toBe('123');
       expect(tech.name).toBe('JavaScript');
-      expect(tech.category).toBe('Programming');
+      expect(tech.categoryId).toBe('cat-1');
+      expect(tech.categoryName).toBe('Programming');
       expect(tech.createdAt).toBeInstanceOf(Date);
     });
 
@@ -19,11 +21,13 @@ describe('Technology Entity', () => {
       const tech = Technology.create({
         id: '456',
         name: '  TypeScript  ',
-        category: '  Frontend  ',
+        categoryId: '  cat-2  ',
+        categoryName: '  Frontend  ',
       });
 
       expect(tech.name).toBe('TypeScript');
-      expect(tech.category).toBe('Frontend');
+      expect(tech.categoryId).toBe('cat-2');
+      expect(tech.categoryName).toBe('Frontend');
     });
 
     it('should create a technology with custom timestamp', () => {
@@ -31,7 +35,8 @@ describe('Technology Entity', () => {
       const tech = Technology.create({
         id: '789',
         name: 'React',
-        category: 'Framework',
+        categoryId: 'cat-3',
+        categoryName: 'Framework',
         createdAt,
       });
 
@@ -43,7 +48,7 @@ describe('Technology Entity', () => {
         Technology.create({
           id: '123',
           name: '',
-          category: 'Programming',
+          categoryId: 'cat-1',
         });
       }).toThrow('Technology name is required');
     });
@@ -53,27 +58,27 @@ describe('Technology Entity', () => {
         Technology.create({
           id: '123',
           name: '   ',
-          category: 'Programming',
+          categoryId: 'cat-1',
         });
       }).toThrow('Technology name is required');
     });
 
-    it('should throw error when category is empty', () => {
+    it('should throw error when categoryId is empty', () => {
       expect(() => {
         Technology.create({
           id: '123',
           name: 'JavaScript',
-          category: '',
+          categoryId: '',
         });
       }).toThrow('Technology category is required');
     });
 
-    it('should throw error when category is only whitespace', () => {
+    it('should throw error when categoryId is only whitespace', () => {
       expect(() => {
         Technology.create({
           id: '123',
           name: 'JavaScript',
-          category: '   ',
+          categoryId: '   ',
         });
       }).toThrow('Technology category is required');
     });
@@ -84,7 +89,8 @@ describe('Technology Entity', () => {
       const tech = Technology.create({
         id: '123',
         name: 'JavaScript',
-        category: 'Programming',
+        categoryId: 'cat-1',
+        categoryName: 'Programming',
       });
 
       const json = tech.toJSON();
@@ -92,7 +98,8 @@ describe('Technology Entity', () => {
       expect(json).toEqual({
         id: '123',
         name: 'JavaScript',
-        category: 'Programming',
+        categoryId: 'cat-1',
+        categoryName: 'Programming',
         createdAt: expect.any(String),
       });
     });

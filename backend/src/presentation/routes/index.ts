@@ -3,6 +3,7 @@ import authRoutes from './authRoutes';
 import userRoutes from './userRoutes';
 import trainingRecordRoutes from './trainingRecordRoutes';
 import technologyRoutes from './technologyRoutes';
+import categoryRoutes from './categoryRoutes';
 import analyticsRoutes from './analyticsRoutes';
 import auditLogRoutes from './auditLogRoutes';
 
@@ -12,6 +13,7 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/training-records', trainingRecordRoutes);
 router.use('/technologies', technologyRoutes);
+router.use('/categories', categoryRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/audit-logs', auditLogRoutes);
 

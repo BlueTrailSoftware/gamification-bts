@@ -28,11 +28,18 @@ CREATE TABLE users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Categories table
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Technologies table
 CREATE TABLE technologies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) UNIQUE NOT NULL,
-  category VARCHAR(100) NOT NULL,
+  category_id UUID NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -94,8 +101,9 @@ CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_is_active ON users(is_active);
 
 -- Technologies table indexes
+CREATE INDEX idx_categories_name ON categories(name);
 CREATE INDEX idx_technologies_name ON technologies(name);
-CREATE INDEX idx_technologies_category ON technologies(category);
+CREATE INDEX idx_technologies_category_id ON technologies(category_id);
 
 -- Training records table indexes
 CREATE INDEX idx_training_records_user_id ON training_records(user_id);
@@ -137,8 +145,22 @@ VALUES (
   'LOCAL'
 );
 
+-- Default categories
+INSERT INTO categories (name) VALUES
+  ('Programming'),
+  ('Frontend'),
+  ('Backend'),
+  ('Testing'),
+  ('Operations'),
+  ('Infrastructure'),
+  ('Data'),
+  ('Security'),
+  ('AI');
+
 -- Default technologies
-INSERT INTO technologies (name, category) VALUES
+INSERT INTO technologies (name, category_id)
+SELECT seed.name, c.id
+FROM (VALUES
   ('JavaScript', 'Programming'),
   ('TypeScript', 'Programming'),
   ('React', 'Frontend'),
@@ -148,7 +170,9 @@ INSERT INTO technologies (name, category) VALUES
   ('DevOps', 'Operations'),
   ('Cloud Computing', 'Infrastructure'),
   ('Database Design', 'Data'),
-  ('Security', 'Security');
+  ('Security', 'Security')
+) AS seed(name, category_name)
+JOIN categories c ON c.name = seed.category_name;
 
 -- ============================================================================
 -- FUNCTIONS AND TRIGGERS

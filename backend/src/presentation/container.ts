@@ -4,6 +4,7 @@
  */
 import { UserRepository } from '../infrastructure/database/repositories/UserRepository';
 import { TechnologyRepository } from '../infrastructure/database/repositories/TechnologyRepository';
+import { CategoryRepository } from '../infrastructure/database/repositories/CategoryRepository';
 import { TrainingRecordRepository } from '../infrastructure/database/repositories/TrainingRecordRepository';
 import { TrainingFileRepository } from '../infrastructure/database/repositories/TrainingFileRepository';
 import { AuditLogRepository } from '../infrastructure/database/repositories/AuditLogRepository';
@@ -44,6 +45,7 @@ import { ExportTrainingDataUseCase } from '../application/use-cases/analytics/Ex
 // --- Repositories ---
 export const userRepository = new UserRepository();
 export const technologyRepository = new TechnologyRepository();
+export const categoryRepository = new CategoryRepository();
 export const trainingRecordRepository = new TrainingRecordRepository();
 export const trainingFileRepository = new TrainingFileRepository();
 export const auditLogRepository = new AuditLogRepository();
