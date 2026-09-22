@@ -66,6 +66,7 @@ describe('ExportTrainingDataUseCase', () => {
       findByUserId: jest.fn(),
       search: jest.fn().mockResolvedValue([recordWithCompletion, recordWithoutCompletion]),
       findByDateRange: jest.fn().mockResolvedValue([recordWithCompletion]),
+      browseAll: jest.fn(),
     };
 
     mockTechnologyRepo = {
@@ -136,13 +137,15 @@ describe('ExportTrainingDataUseCase', () => {
   });
 
   it('should apply date range filtering', async () => {
-    const csv = await useCase.execute({
-      startDate: new Date('2024-06-01'),
-      endDate: new Date('2024-06-30'),
-    });
+    const startDate = new Date('2024-06-01');
+    const endDate = new Date('2024-06-30');
+    mockTrainingRecordRepo.search.mockResolvedValue([recordWithCompletion]);
+
+    const csv = await useCase.execute({ startDate, endDate });
     const rows = csv.split('\n');
-    // Header + 1 record (findByDateRange returns only recordWithCompletion)
+    // Header + 1 record (the filtered search returns only recordWithCompletion)
     expect(rows.length).toBe(2);
-    expect(mockTrainingRecordRepo.findByDateRange).toHaveBeenCalled();
+    const expectedCriteria: SearchCriteria = { startDate, endDate };
+    expect(mockTrainingRecordRepo.search).toHaveBeenCalledWith(expectedCriteria);
   });
 });

@@ -1,8 +1,7 @@
 import { ITrainingRecordRepository } from '../../../domain/repositories/ITrainingRecordRepository';
 import { ITechnologyRepository } from '../../../domain/repositories/ITechnologyRepository';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
-import { DateRange } from '../../../domain/value-objects/DateRange';
-import { ValidationError } from '../../../shared/errors';
+import { resolveAnalyticsDateRange } from './resolveAnalyticsDateRange';
 
 export interface ExportTrainingDataRequest {
   startDate?: Date;
@@ -19,19 +18,9 @@ export class ExportTrainingDataUseCase {
   ) {}
 
   async execute(request: ExportTrainingDataRequest): Promise<string> {
-    let records;
-
-    if (request.startDate && request.endDate) {
-      const dateRange = new DateRange(request.startDate, request.endDate);
-      records = await this.trainingRecordRepository.findByDateRange(
-        dateRange.getStartDate(),
-        dateRange.getEndDate()
-      );
-    } else if (request.startDate || request.endDate) {
-      throw new ValidationError('Both startDate and endDate must be provided for date range filtering');
-    } else {
-      records = await this.trainingRecordRepository.search({});
-    }
+    const records = await this.trainingRecordRepository.search(
+      resolveAnalyticsDateRange(request.startDate, request.endDate)
+    );
 
     // Build lookup maps
     const users = await this.userRepository.listAll();
