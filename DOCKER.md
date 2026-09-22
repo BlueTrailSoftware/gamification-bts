@@ -28,18 +28,34 @@ docker-compose -f docker-compose.dev.yml up
    - Backend API: http://localhost:8000
    - Database: localhost:5432
 
+### Local Mode (production images, local database)
+
+`docker-compose.override.yml` adds a PostgreSQL service and points the backend at
+it. Compose applies that file automatically whenever it is present, so it is not
+committed: a copy left on a server would silently override the real database
+connection. Create it from the template:
+
+```bash
+cp docker-compose.override.yml.example docker-compose.override.yml
+docker compose up -d
+```
+
 ### Production Mode
+
+The server runs its own PostgreSQL, so it must never pick up the local override.
+Always pass the compose file explicitly.
 
 1. Copy the environment file:
 ```bash
 cp .env.example .env
 ```
 
-2. Edit `.env` with production values (use strong passwords and secrets)
+2. Edit `.env` with production values (use strong passwords and secrets), including
+   `DATABASE_URL` pointing at the server's PostgreSQL instance
 
 3. Build and start all services:
 ```bash
-docker-compose up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 4. Access the application:

@@ -12,6 +12,12 @@ build/
 .env.local
 .env.*.local
 
+# Local Docker Compose overrides
+# Compose applies this file automatically whenever it is present, so keeping it
+# out of the repository prevents local settings from reaching a server.
+# Copy docker-compose.override.yml.example to get the local database service.
+docker-compose.override.yml
+
 # Logs
 logs/
 *.log

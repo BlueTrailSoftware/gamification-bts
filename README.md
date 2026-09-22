@@ -99,10 +99,15 @@ cp .env.example .env
 docker-compose -f docker-compose.dev.yml up
 ```
 
-**Production mode:**
+**Production images against a local database:**
 ```bash
-docker-compose up -d
+cp docker-compose.override.yml.example docker-compose.override.yml
+docker compose up -d
 ```
+
+The override file is not committed, because Compose applies it automatically
+whenever it is present and it would override a server's real database
+connection. On a server, run `docker compose -f docker-compose.yml up -d`.
 
 4. Access the application:
    - Frontend: http://localhost:3000
