@@ -10,6 +10,21 @@ import {
 } from '../../../domain/repositories/ITrainingRecordRepository';
 
 /**
+ * Date-range filters target the date the training was actually completed.
+ * Records saved without a completion date fall back to their creation date so
+ * they never drop out of every range.
+ */
+const EFFECTIVE_DATE_SQL = 'COALESCE(tr.completion_date, tr.created_at::date)';
+
+/**
+ * Binds a range boundary as a calendar day (YYYY-MM-DD) instead of a timestamp,
+ * keeping both ends of the range inclusive regardless of the server timezone.
+ */
+function toDateParam(value: Date): string {
+  return value.toISOString().split('T')[0];
+}
+
+/**
  * PostgreSQL implementation of TrainingRecordRepository
  * Requirements: 4.1, 5.4
  */
@@ -228,13 +243,13 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
     }
 
     if (criteria.startDate) {
-      conditions.push(`tr.created_at >= $${paramIndex++}`);
-      values.push(criteria.startDate);
+      conditions.push(`${EFFECTIVE_DATE_SQL} >= $${paramIndex++}::date`);
+      values.push(toDateParam(criteria.startDate));
     }
 
     if (criteria.endDate) {
-      conditions.push(`tr.created_at <= $${paramIndex++}`);
-      values.push(criteria.endDate);
+      conditions.push(`${EFFECTIVE_DATE_SQL} <= $${paramIndex++}::date`);
+      values.push(toDateParam(criteria.endDate));
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -316,12 +331,12 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
   async findByDateRange(startDate: Date, endDate: Date): Promise<TrainingRecord[]> {
     const pool = getDatabasePool();
     const query = `
-      SELECT * FROM training_records
-      WHERE created_at >= $1 AND created_at <= $2
-      ORDER BY created_at DESC
+      SELECT tr.* FROM training_records tr
+      WHERE ${EFFECTIVE_DATE_SQL} >= $1::date AND ${EFFECTIVE_DATE_SQL} <= $2::date
+      ORDER BY ${EFFECTIVE_DATE_SQL} DESC
     `;
 
-    const result = await pool.query(query, [startDate, endDate]);
+    const result = await pool.query(query, [toDateParam(startDate), toDateParam(endDate)]);
     return result.rows.map((row) => this.mapRowToTrainingRecord(row));
   }
 
@@ -342,13 +357,13 @@ export class TrainingRecordRepository implements ITrainingRecordRepository {
     }
 
     if (criteria.startDate) {
-      conditions.push(`tr.created_at >= $${paramIndex++}`);
-      values.push(criteria.startDate);
+      conditions.push(`${EFFECTIVE_DATE_SQL} >= $${paramIndex++}::date`);
+      values.push(toDateParam(criteria.startDate));
     }
 
     if (criteria.endDate) {
-      conditions.push(`tr.created_at <= $${paramIndex++}`);
-      values.push(criteria.endDate);
+      conditions.push(`${EFFECTIVE_DATE_SQL} <= $${paramIndex++}::date`);
+      values.push(toDateParam(criteria.endDate));
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
